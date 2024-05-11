@@ -11,12 +11,12 @@
 class BST : public DefaultBST {
 private:
     // 멤버 변수 추가 선언 가능
-    Node* root;
+    Node* root; // 루트 노드 포인터
 
 public:
     // 멤버 함수 추가 선언 가능
-    BST();  // 기본 생성자 선언
-    ~BST(); // 소멸자 선언
+    BST();  // 기본 생성자 
+    ~BST(); // 소멸자 
     void insert(int key, int value) override;
     int lookup(int key) override;
     void remove(int key) override;
@@ -32,13 +32,13 @@ public:
 class CoarseBST : public DefaultBST {
 private:
     // 멤버 변수 추가 선언 가능
-    Node* root;
-    pthread_mutex_t mutex_lock;
+    Node* root; // 루트 노드 포인터
+    pthread_mutex_t mutex_lock; // 뮤텍스 락
 
 public:
     // 멤버 함수 추가 선언 가능
-    CoarseBST();
-    ~CoarseBST();
+    CoarseBST(); // 기본 생성자 
+    ~CoarseBST(); // 소멸자 
     void insert(int key, int value) override;
     int lookup(int key) override;
     void remove(int key) override;
@@ -48,11 +48,11 @@ public:
 /// @brief FineBST는 FineNode를 정의하여 사용하길 권장한다.
 struct FineNode : public Node {
     // 멤버 변수 추가 가능
-    // FineNode에 대한 fine-grained lock
-    pthread_mutex_t node_lock;
+    pthread_mutex_t node_lock; // FineNode에 대한 fine-grained lock
 
     // 생성자
-    FineNode(int key, int value, int upd_cnt, Node* left, Node* right) : Node{key, value, upd_cnt, left, right} {
+    FineNode(int key, int value, int upd_cnt, Node* left, Node* right) 
+    : Node{key, value, upd_cnt, left, right} {
         pthread_mutex_init(&node_lock, nullptr);
     }
 
@@ -72,12 +72,11 @@ struct FineNode : public Node {
 class FineBST : public DefaultBST {
 	private:
 		// 멤버 변수 추가 선언 가능
-        FineNode* root;
+        FineNode* root; // 루트 노드 포인터
         
 	public:
-        FineBST();
-        ~FineBST();
-
+        FineBST(); // 기본 생성자
+        ~FineBST(); // 소멸자 
 		void insert(int key, int value) override;
 		int lookup(int key) override;
 		void remove(int key) override;
