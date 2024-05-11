@@ -47,18 +47,18 @@ public:
 
 /// @brief FineBST는 FineNode를 정의하여 사용하길 권장한다.
 struct FineNode : public Node {
-    // 멤버 변수 추가 가능
-    pthread_mutex_t node_lock; // FineNode에 대한 fine-grained lock
-
-    // 생성자
-    FineNode(int key, int value, int upd_cnt, Node* left, Node* right) 
-    : Node{key, value, upd_cnt, left, right} {
-        pthread_mutex_init(&node_lock, nullptr);
+    pthread_mutex_t mutex;
+    pthread_cond_t condInsert;
+    pthread_cond_t condRemove;
+    FineNode(int k, int v) : Node{k, v, 0, nullptr, nullptr} {
+        pthread_mutex_init(&mutex, nullptr);
+        pthread_cond_init(&condInsert, nullptr);
+        pthread_cond_init(&condRemove, nullptr);
     }
-
-    // 소멸자
     ~FineNode() {
-        pthread_mutex_destroy(&node_lock);
+        pthread_mutex_destroy(&mutex);
+        pthread_cond_destroy(&condInsert);
+        pthread_cond_destroy(&condRemove);
     }
 };
 
@@ -71,8 +71,15 @@ struct FineNode : public Node {
  */
 class FineBST : public DefaultBST {
 	private:
-		// 멤버 변수 추가 선언 가능
-        FineNode* root; // 루트 노드 포인터
+        FineNode* root = nullptr;
+
+        void lockNode(FineNode* node) {
+            pthread_mutex_lock(&node->mutex);
+        }
+
+        void unlockNode(FineNode* node) {
+            pthread_mutex_unlock(&node->mutex);
+        }
         
 	public:
         FineBST(); // 기본 생성자
