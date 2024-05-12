@@ -107,23 +107,22 @@ void BST::remove(int key) {
     }
 }
 
+void BST::traversalRecursive(Node* node, KVC* arr, int& index) {
+    if (node == nullptr) {
+        return;
+    }
+
+    traversalRecursive(node->left, arr, index);
+    arr[index].key = node->key;  
+    arr[index].value = node->value;
+    arr[index].upd_cnt = node->upd_cnt;
+    index++; 
+    traversalRecursive(node->right, arr, index);
+}
+
 void BST::traversal(KVC* arr) {
     int index = 0;
-    Node* stack[128]; // 스택을 사용한 비재귀 중위 순회
-    int sp = 0; // 스택 포인터
-    Node* node = root;
-    while (node != nullptr || sp > 0) {
-        while (node != nullptr) {
-            stack[sp++] = node; // 현재 노드를 스택에 푸시하고 왼쪽으로 이동
-            node = node->left; 
-        }
-        node = stack[--sp]; // 스택에서 팝하여 노드 방문
-        arr[index].key = node->key;  
-        arr[index].value = node->value;
-        arr[index].upd_cnt = node->upd_cnt;
-        index++; 
-        node = node->right; // 오른쪽 자식 노드로 이동
-    }
+    traversalRecursive(root, arr, index);
 }
 
 // CoarseBST 구현
@@ -253,62 +252,28 @@ void CoarseBST::remove(int key) {
     pthread_mutex_unlock(&mutex_lock); // 락 해제
 }
 
-void CoarseBST::traversal(KVC* arr) {
-
-
-    int index = 0;
-    Node* stack[128]; // 스택을 사용한 비재귀 중위 순회
-    int sp = 0; // 스택 포인터
-    Node* node = root;
-    while (node != nullptr || sp > 0) {
-        while (node != nullptr) {
-            stack[sp++] = node; // 현재 노드를 스택에 푸시하고 왼쪽으로 이동
-            node = node->left; 
-        }
-        node = stack[--sp]; // 스택에서 팝하여 노드 방문
-        arr[index].key = node->key;  
-        arr[index].value = node->value;
-        arr[index].upd_cnt = node->upd_cnt;
-        index++; 
-        node = node->right; // 오른쪽 자식 노드로 이동
+void CoarseBST::traversalRecursive(Node* node, KVC* arr, int& index) {
+    if (node == nullptr) {
+        return;
     }
 
+    traversalRecursive(node->left, arr, index);
+    arr[index].key = node->key;  
+    arr[index].value = node->value;
+    arr[index].upd_cnt = node->upd_cnt;
+    index++; 
+    traversalRecursive(node->right, arr, index);
+}
 
+void CoarseBST::traversal(KVC* arr) {
+    int index = 0;
+    traversalRecursive(root, arr, index);
 }
 
 // FineBST 구현
 FineBST::FineBST() : root(nullptr) {}
 FineBST::~FineBST() {
-    
-    struct Stack {
-        FineNode* node;
-        Stack* next;
-    };
-    Stack* stack = nullptr;
-    FineNode* current = root;
-    FineNode* last_visited = nullptr;
-
-    while (current != nullptr || stack != nullptr) {
-        if (current != nullptr) {
-            
-            Stack* new_stack = new Stack{current, stack};
-            stack = new_stack;
-            current = static_cast<FineNode*>(current->left);
-        } else {
-            
-            FineNode* temp = static_cast<FineNode*>(stack->node->right);
-            if (temp == nullptr || temp == last_visited) {
-                 FineNode* to_delete = stack->node;
-                stack = stack->next;
-                delete to_delete;
-                last_visited = to_delete;
-            } else {
-                current = temp;
-            }
-        }
-    }
 }
-
 
 
 void FineBST::insert(int key, int value) {
@@ -350,7 +315,7 @@ void FineBST::insert(int key, int value) {
 
             cur->is_being_modified = false;
             pthread_cond_signal(&cur->insert_cond);  // insert 완료 신호
-            delete new_node;
+            
             pthread_mutex_unlock(&cur->node_lock);
 
             return;
@@ -396,6 +361,10 @@ void FineBST::remove(int key) {
     FineNode* parent = nullptr;
     FineNode* target = nullptr;
     FineNode* target_parent = nullptr;
+
+    if (cur == nullptr) {
+        return;
+    }
 
     // First, locate the node to be removed
     while (true) {
@@ -465,10 +434,11 @@ void FineBST::remove(int key) {
             min = static_cast<FineNode*>(min->left);
         }
 
-        // Copy the data from the min node to the target node
-        target->key = min->key;
-        target->value = min->value;
-        target->upd_cnt = min->upd_cnt;
+       if (target != min) {
+            target->key = min->key;
+            target->value = min->value;
+            target->upd_cnt = min->upd_cnt;
+        }
 
         if (min_parent->left == min) {
             min_parent->left = min->right;
@@ -481,30 +451,26 @@ void FineBST::remove(int key) {
         min->is_being_modified = false;
         pthread_cond_signal(&min->remove_cond);  // remove 완료 신호
 
-        delete min;
+        
         pthread_mutex_unlock(&target->node_lock);
     }
 }
 
 
+void FineBST::traversalRecursive(FineNode* node, KVC* arr, int& index) {
+    if (node == nullptr) {
+        return;
+    }
+
+    traversalRecursive(static_cast<FineNode*>(node->left), arr, index);
+    arr[index].key = node->key;  
+    arr[index].value = node->value;
+    arr[index].upd_cnt = node->upd_cnt;
+    index++; 
+    traversalRecursive(static_cast<FineNode*>(node->right), arr, index);
+}
 
 void FineBST::traversal(KVC* arr) {
-    FineNode* stack[128];  // Assuming a stack size sufficient for most practical cases
-    int sp = 0;
-    FineNode* node = root;
-
-    while (node != nullptr || sp > 0) {
-        while (node != nullptr) {
-            pthread_mutex_lock(&node->node_lock);
-            stack[sp++] = node;
-            node = static_cast<FineNode*>(node->left);
-        }
-        node = stack[--sp];
-        arr->key = node->key;
-        arr->value = node->value;
-        arr->upd_cnt = node->upd_cnt;
-        arr++;
-        node = static_cast<FineNode*>(node->right);
-        pthread_mutex_unlock(&stack[sp]->node_lock);
-    }
+    int index = 0;
+    traversalRecursive(root, arr, index);
 }

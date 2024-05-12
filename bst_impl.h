@@ -15,12 +15,13 @@ private:
 
 public:
     // 멤버 함수 추가 선언 가능
-    BST();  // 기본 생성자 
-    ~BST(); // 소멸자 
+    BST(); 
+    ~BST(); 
     void insert(int key, int value) override;
     int lookup(int key) override;
     void remove(int key) override;
     void traversal(KVC* arr) override;
+    void traversalRecursive(Node* node, KVC* arr, int& index);
 };
 
 /**
@@ -37,12 +38,13 @@ private:
 
 public:
     // 멤버 함수 추가 선언 가능
-    CoarseBST(); // 기본 생성자 
-    ~CoarseBST(); // 소멸자 
+    CoarseBST();
+    ~CoarseBST();
     void insert(int key, int value) override;
     int lookup(int key) override;
     void remove(int key) override;
     void traversal(KVC* arr) override;
+    void traversalRecursive(Node* node, KVC* arr, int& index);
 };
 
 /// @brief FineBST는 FineNode를 정의하여 사용하길 권장한다.
@@ -81,11 +83,12 @@ class FineBST : public DefaultBST {
         FineNode* root; // 루트 노드 포인터
         
 	public:
-        FineBST(); // 기본 생성자
-        ~FineBST(); // 소멸자 
+        FineBST();
+        ~FineBST();
 		void insert(int key, int value) override;
 		int lookup(int key) override;
 		void remove(int key) override;
 		void traversal(KVC* arr) override;
+        void traversalRecursive(FineNode* node, KVC* arr, int& index);
 };
 #endif
