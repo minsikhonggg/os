@@ -65,11 +65,7 @@ struct FineNode : public Node {
         pthread_cond_init(&remove_cond, nullptr);
         
     }
-    ~FineNode() {
-        pthread_mutex_destroy(&node_lock);
-        pthread_cond_destroy(&insert_cond);
-        pthread_cond_destroy(&remove_cond);
-    }
+
 };
 
 /**
