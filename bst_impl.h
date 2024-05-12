@@ -16,7 +16,6 @@ private:
 public:
     // 멤버 함수 추가 선언 가능
     BST(); 
-    ~BST(); 
     void insert(int key, int value) override;
     int lookup(int key) override;
     void remove(int key) override;
@@ -39,7 +38,6 @@ private:
 public:
     // 멤버 함수 추가 선언 가능
     CoarseBST();
-    ~CoarseBST();
     void insert(int key, int value) override;
     int lookup(int key) override;
     void remove(int key) override;
@@ -63,7 +61,6 @@ struct FineNode : public Node {
         pthread_mutex_init(&node_lock, nullptr);
         pthread_cond_init(&insert_cond, nullptr);
         pthread_cond_init(&remove_cond, nullptr);
-        
     }
 
 };
@@ -82,7 +79,6 @@ class FineBST : public DefaultBST {
         
 	public:
         FineBST();
-        ~FineBST();
 		void insert(int key, int value) override;
 		int lookup(int key) override;
 		void remove(int key) override;
