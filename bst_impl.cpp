@@ -353,7 +353,6 @@ void FineBST::insert(int key, int value) {
 
             pthread_mutex_unlock(&cur->node_lock);
 
-            delete new_node;
             return;
         }
 
