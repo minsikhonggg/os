@@ -350,7 +350,7 @@ void FineBST::insert(int key, int value) {
 
             cur->is_being_modified = false;
             pthread_cond_signal(&cur->insert_cond);  // insert 완료 신호
-
+            delete new_node;
             pthread_mutex_unlock(&cur->node_lock);
 
             return;
@@ -440,7 +440,7 @@ void FineBST::remove(int key) {
             target_parent->right = nullptr;
         }
         pthread_mutex_unlock(&target->node_lock);
-        delete target;
+        
     } else if (target->left == nullptr || target->right == nullptr) {
         // Case 2: Node to be removed has one child
         FineNode* child = (target->left != nullptr) ? static_cast<FineNode*>(target->left) : static_cast<FineNode*>(target->right);
@@ -452,13 +452,13 @@ void FineBST::remove(int key) {
             target_parent->right = child;
         }
         pthread_mutex_unlock(&target->node_lock);
-        delete target;
+        
     } else {
         // Case 3: Node to be removed has two children
         FineNode* min = static_cast<FineNode*>(target->right);
         FineNode* min_parent = target;
 
-        while (min->left != nullptr) {
+        while (min != nullptr && min->left != nullptr) {
             pthread_mutex_lock(&min->node_lock);
             pthread_mutex_unlock(&min_parent->node_lock);
             min_parent = min;
