@@ -400,7 +400,7 @@ void FineBST::remove(int key) {
     pthread_mutex_lock(&target->node_lock);
 
     if (target->left == nullptr && target->right == nullptr) {
-        // 자식이 없는 경우
+        
         if (target_parent == nullptr) {
             root = nullptr;
         } else if (target_parent->left == target) {
@@ -410,33 +410,8 @@ void FineBST::remove(int key) {
         }
         pthread_mutex_unlock(&target->node_lock);
         
-    } else if (target->left != nullptr && target->right != nullptr) {
-        // 자식이 둘 다 있을 경우
-        FineNode* min = static_cast<FineNode*>(target->right);
-        FineNode* min_parent = target;
-
-        while (min->left != nullptr) {
-            pthread_mutex_lock(&min->node_lock);
-            pthread_mutex_unlock(&min_parent->node_lock);
-            min_parent = min;
-            min = static_cast<FineNode*>(min->left);
-        }
-
-        target->key = min->key;
-        target->value = min->value;
-        target->upd_cnt = min->upd_cnt;
-
-        if (min_parent->left == min) {
-            min_parent->left = min->right;
-        } else {
-            min_parent->right = min->right;
-        }
-
-        pthread_mutex_unlock(&min_parent->node_lock);
-        pthread_mutex_unlock(&target->node_lock);
-
-    } else {
-        // 자식이 하나만 있을 경우
+    } else if (target->left == nullptr || target->right == nullptr) {
+        
         FineNode* child = (target->left != nullptr) ? static_cast<FineNode*>(target->left) : static_cast<FineNode*>(target->right);
         if (target_parent == nullptr) {
             root = child;
@@ -446,12 +421,40 @@ void FineBST::remove(int key) {
             target_parent->right = child;
         }
         pthread_mutex_unlock(&target->node_lock);
+        
+    } else {
+    
+        FineNode* min = static_cast<FineNode*>(target->right);
+        FineNode* min_parent = target;
 
+        while (min != nullptr && min->left != nullptr) {
+            pthread_mutex_lock(&min->node_lock);
+            pthread_mutex_unlock(&min_parent->node_lock);
+            min_parent = min;
+            if(min->left != nullptr)
+                min = static_cast<FineNode*>(min->left);
+        }
+
+       if (target != min) {
+            target->key = min->key;
+            target->value = min->value;
+            target->upd_cnt = min->upd_cnt;
+        }
+
+        if (min_parent->left == min) {
+            min_parent->left = min->right;
+        } else {
+            min_parent->right = min->right;
+        }
+
+        pthread_mutex_unlock(&min_parent->node_lock);
+
+        min->is_being_modified = false;
+        pthread_cond_signal(&min->remove_cond);  // remove 완료 신호
+
+        
+        pthread_mutex_unlock(&target->node_lock);
     }
-
-    cur->is_being_modified = false;
-    pthread_cond_signal(&cur->remove_cond);  // remove 완료 신호
-
 }
 
 void FineBST::traversalRecursive(FineNode* node, KVC* arr, int& index) {

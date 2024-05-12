@@ -56,13 +56,15 @@ struct FineNode : public Node {
     pthread_cond_t remove_cond;  // remove 작업이 대기할 조건 변수
     bool is_being_modified;   // 현재 수정 중인지 표시
 
+    
+
     FineNode(int key, int value, int upd_cnt, Node* left, Node* right) 
     : Node{key, value, upd_cnt, left, right}, is_being_modified(false) {
         pthread_mutex_init(&node_lock, nullptr);
         pthread_cond_init(&insert_cond, nullptr);
         pthread_cond_init(&remove_cond, nullptr);
+        
     }
-
     ~FineNode() {
         pthread_mutex_destroy(&node_lock);
         pthread_cond_destroy(&insert_cond);
