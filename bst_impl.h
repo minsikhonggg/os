@@ -47,18 +47,24 @@ public:
 
 /// @brief FineBST는 FineNode를 정의하여 사용하길 권장한다.
 struct FineNode : public Node {
-    pthread_mutex_t mutex;
-    pthread_cond_t condInsert;
-    pthread_cond_t condRemove;
-    FineNode(int k, int v) : Node{k, v, 0, nullptr, nullptr} {
-        pthread_mutex_init(&mutex, nullptr);
-        pthread_cond_init(&condInsert, nullptr);
-        pthread_cond_init(&condRemove, nullptr);
+    // 멤버 변수 추가 가능
+    pthread_mutex_t node_lock; // FineNode에 대한 fine-grained lock
+
+    pthread_cond_t insert_cond;  // insert 작업이 대기할 조건 변수
+    pthread_cond_t remove_cond;  // remove 작업이 대기할 조건 변수
+    bool is_being_modified;   // 현재 수정 중인지 표시
+
+    FineNode(int key, int value, int upd_cnt, Node* left, Node* right) 
+    : Node{key, value, upd_cnt, left, right}, is_being_modified(false) {
+        pthread_mutex_init(&node_lock, nullptr);
+        pthread_cond_init(&insert_cond, nullptr);
+        pthread_cond_init(&remove_cond, nullptr);
     }
+
     ~FineNode() {
-        pthread_mutex_destroy(&mutex);
-        pthread_cond_destroy(&condInsert);
-        pthread_cond_destroy(&condRemove);
+        pthread_mutex_destroy(&node_lock);
+        pthread_cond_destroy(&insert_cond);
+        pthread_cond_destroy(&remove_cond);
     }
 };
 
@@ -71,15 +77,8 @@ struct FineNode : public Node {
  */
 class FineBST : public DefaultBST {
 	private:
-        FineNode* root = nullptr;
-
-        void lockNode(FineNode* node) {
-            pthread_mutex_lock(&node->mutex);
-        }
-
-        void unlockNode(FineNode* node) {
-            pthread_mutex_unlock(&node->mutex);
-        }
+		// 멤버 변수 추가 선언 가능
+        FineNode* root; // 루트 노드 포인터
         
 	public:
         FineBST(); // 기본 생성자
