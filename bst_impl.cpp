@@ -1,3 +1,9 @@
+/*
+*	DKU Operating System Class
+*	    Lab2 (Concurrent Data Structure: BST)
+*	    Student id : 32204938
+*	    Student name : 홍민식
+*/
 #include "bst_impl.h"
 
 // BST 구현
@@ -21,7 +27,7 @@ void BST::insert(int key, int value) {
                 return;
             }
             current = current->left; // 왼쪽 자식으로 이동
-        } 
+        }
         else if (key > current->key) 
         { // 삽입할 키가 현재 노드의 키보다 크면
             if (current->right == nullptr) { // 오른쪽 자식이 없는 경우
@@ -29,9 +35,9 @@ void BST::insert(int key, int value) {
                 return;
             }
             current = current->right; // 오른쪽 자식으로 이동
-        } 
-        else 
-        { 
+        }
+        else
+        {
             current->value += value; // 동일한 키 발견시 값 업데이트
             current->upd_cnt++; // 업데이트 횟수 증가
             delete newNode; // 새로운 노드 메모리 해제
@@ -281,6 +287,7 @@ void FineBST::insert(int key, int value) {
     FineNode* parent = nullptr;
 
     while (true) {
+        
         pthread_mutex_lock(&cur->node_lock);
 
         parent = cur;
@@ -289,6 +296,7 @@ void FineBST::insert(int key, int value) {
             if (cur->left == nullptr) {
                 cur->left = new_node;
                 pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
+
                 return;
             }
             cur = static_cast<FineNode*>(cur->left); // 왼쪽 자식으로 이동
@@ -296,6 +304,7 @@ void FineBST::insert(int key, int value) {
             if (cur->right == nullptr) {
                 cur->right = new_node;
                 pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
+ 
                 return; 
             }
             cur = static_cast<FineNode*>(cur->right); // 오른쪽 자식으로 이동
@@ -303,14 +312,15 @@ void FineBST::insert(int key, int value) {
             cur->value += value;
             cur->upd_cnt++;         
             pthread_mutex_unlock(&cur->node_lock); // 현재 노드 잠금 해제
+          
             //delete new_node;
             return;
         }
 
         pthread_mutex_unlock(&parent->node_lock); // 부모 노드 잠금 해제
+    
     }
 }
-
 
 int FineBST::lookup(int key) {
 

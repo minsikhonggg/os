@@ -1,3 +1,10 @@
+/*
+*	DKU Operating System Class
+*	    Lab2 (Concurrent Data Structure: BST)
+*	    Student id : 32204938
+*	    Student name : 홍민식
+*/
+
 #include "bst.h"
 
 #ifndef BST_IMPL_H
