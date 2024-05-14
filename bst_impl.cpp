@@ -264,6 +264,7 @@ void CoarseBST::traversal(KVC* arr) {
     traversalRecursive(root, arr, index); // 루트부터 순회 시작
 }
 
+
 // FineBST 구현
 FineBST::FineBST() : root(nullptr) {}
 
@@ -282,17 +283,11 @@ void FineBST::insert(int key, int value) {
     while (true) {
         pthread_mutex_lock(&cur->node_lock);
 
-        while (cur->is_being_modified) {  // 수정 중인지 확인
-            // remove 작업이 완료될 때까지 대기
-            pthread_cond_wait(&cur->remove_cond, &cur->node_lock);
-        }
         parent = cur;
 
         if (key < cur->key) { // 삽입할 키가 현재 키보다 작으면
             if (cur->left == nullptr) {
                 cur->left = new_node;
-                cur->is_being_modified = false; // 수정 상태 해제
-                pthread_cond_signal(&cur->insert_cond);  // insert 완료 신호
                 pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
                 return;
             }
@@ -300,18 +295,15 @@ void FineBST::insert(int key, int value) {
         } else if (key > cur->key) { // 삽입할 키가 현재 키보다 크면
             if (cur->right == nullptr) {
                 cur->right = new_node;
-                cur->is_being_modified = false; // 수정 상태 해제
-                pthread_cond_signal(&cur->insert_cond);  // insert 완료 신호
                 pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
                 return; 
             }
             cur = static_cast<FineNode*>(cur->right); // 오른쪽 자식으로 이동
         } else { // 이미 키가 존재하면
             cur->value += value;
-            cur->upd_cnt++;
-            cur->is_being_modified = false; // 수정 상태 해제
-            pthread_cond_signal(&cur->insert_cond);  // insert 완료 신호           
+            cur->upd_cnt++;         
             pthread_mutex_unlock(&cur->node_lock); // 현재 노드 잠금 해제
+            //delete new_node;
             return;
         }
 
@@ -365,11 +357,6 @@ void FineBST::remove(int key) {
     while (true) {
         pthread_mutex_lock(&cur->node_lock); 
 
-        while (cur->is_being_modified) { // 수정 중인지 확인
-            // insert 작업이 완료될 때까지 대기
-            pthread_cond_wait(&cur->insert_cond, &cur->node_lock);
-        }
-
         if (key == cur->key) { // 현재 노드가 목표 노드이면
             target = cur;
             target_parent = parent; 
@@ -386,8 +373,6 @@ void FineBST::remove(int key) {
             parent = cur;
             cur = next; // 오른쪽 자식으로 이동
         } else { // 키를 찾지 못하면
-            cur->is_being_modified = false;
-            pthread_cond_signal(&cur->remove_cond);  // remove 완료 신호
             pthread_mutex_unlock(&cur->node_lock);
             return;
         }
@@ -445,12 +430,10 @@ void FineBST::remove(int key) {
             min_parent->right = min->right;
         }
 
-        pthread_mutex_unlock(&min_parent->node_lock); // 부모 노드의 잠금 해제
-
-        min->is_being_modified = false;
-        pthread_cond_signal(&min->remove_cond);  // remove 완료 신호
+        pthread_mutex_unlock(&min_parent->node_lock); // 
         
         pthread_mutex_unlock(&target->node_lock); // 목표 노드의 잠금 해제
+        delete min;
     }
 }
 

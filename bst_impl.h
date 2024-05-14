@@ -50,17 +50,11 @@ struct FineNode : public Node {
     // 멤버 변수 추가 가능
     pthread_mutex_t node_lock; // FineNode에 대한 fine-grained lock
 
-    pthread_cond_t insert_cond;  // insert 작업이 대기할 조건 변수
-    pthread_cond_t remove_cond;  // remove 작업이 대기할 조건 변수
-    bool is_being_modified;   // 현재 수정 중인지 표시
-
     
 
     FineNode(int key, int value, int upd_cnt, Node* left, Node* right) 
-    : Node{key, value, upd_cnt, left, right}, is_being_modified(false) {
+    : Node{key, value, upd_cnt, left, right} {
         pthread_mutex_init(&node_lock, nullptr);
-        pthread_cond_init(&insert_cond, nullptr);
-        pthread_cond_init(&remove_cond, nullptr);
     }
 
 };
