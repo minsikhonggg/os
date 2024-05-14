@@ -6,6 +6,7 @@
 */
 #include "bst_impl.h"
 
+
 // BST 구현
 BST::BST() : root(nullptr) { 
 } 
@@ -38,12 +39,11 @@ void BST::insert(int key, int value) {
         else { // 동일한 키 발견시
             current->value += value; // 값 업데이트
             current->upd_cnt++; // 업데이트 횟수 증가
-            // delete newNode; // 새로운 노드 메모리 해제
+            delete newNode; // 새로운 노드 메모리 해제
             return;
         }
     }
 }
-
 
 int BST::lookup(int key) {
     Node* node = root; // 루트에서 시작
@@ -71,7 +71,7 @@ void BST::remove(int key) {
         parent = current;
         if (key < current->key)
             current = current->left;
-        else
+        else 
             current = current->right;
     }
 
@@ -79,17 +79,18 @@ void BST::remove(int key) {
     if (current == nullptr)
         return;
 
-    // 삭제할 노드를 찾았을 때
+    // 삭제할 노드가 존재하면, 삭제 과정 시작
     if (current->left == nullptr || current->right == nullptr) {
         // 자식 노드가 하나도 없거나 하나만 있는 경우
-        Node* temp = (current->left != nullptr) ? current->left : current->right;
+        Node* temp = (current->left != nullptr) 
+        ? current->left : current->right;
         if (parent == nullptr)
             root = temp; // 삭제할 노드가 루트일 경우
         else if (parent->left == current)
             parent->left = temp;
         else
             parent->right = temp;
-        // delete current;
+        delete current;
     } else {
         // 자식이 두 개인 경우 오른쪽 서브트리에서 최소값 노드를 찾아 대체
         Node* min = current->right; // 오른쪽 서브트리에서 최소값을 찾기 시작
@@ -128,21 +129,21 @@ void BST::traversal(KVC* arr) {
     traversalRecursive(root, arr, index); // 루트부터 순회 시작
 }
 
-// CoarseBST 구현
-// BST와 동일한 코드 + 전체 lock / 리턴 전 unlock
+
+// CoarseBST 구현 (BST와 동일한 코드 + 전체 lock / 리턴 전 unlock)
 CoarseBST::CoarseBST() : root(nullptr) {
     pthread_mutex_init(&mutex_lock, nullptr); // 뮤텍스 초기화
 }
-
 
 void CoarseBST::insert(int key, int value) {
 
     pthread_mutex_lock(&mutex_lock); // 전체 트리 락
 
     Node* newNode = new Node{key, value, 0, nullptr, nullptr}; 
+
     if (root == nullptr) { 
         root = newNode; 
-        pthread_mutex_unlock(&mutex_lock); 
+        pthread_mutex_unlock(&mutex_lock); // 락 해제
         return;
     }
 
@@ -156,17 +157,19 @@ void CoarseBST::insert(int key, int value) {
                 return;
             }
             current = current->left; 
-        } else if (key > current->key) { 
+        }
+        else if (key > current->key) { 
             if (current->right == nullptr) { 
                 current->right = newNode; 
                 pthread_mutex_unlock(&mutex_lock); // 락 해제
                 return;
             }
             current = current->right; 
-        } else { 
+        }
+        else { 
             current->value += value; 
             current->upd_cnt++; 
-            // delete newNode; 
+            delete newNode; // 새로운 노드 메모리 해제
             pthread_mutex_unlock(&mutex_lock); // 락 해제
             return;
         }
@@ -219,26 +222,25 @@ void CoarseBST::remove(int key) {
         return;
     }
 
-    // 삭제할 노드를 찾았을 때의 처리
     if (current->left == nullptr || current->right == nullptr) {
-        // 자식 노드가 하나도 없거나 하나만 있는 경우
-        Node* temp = (current->left != nullptr) ? current->left : current->right;
+        Node* temp = (current->left != nullptr) 
+        ? current->left : current->right;
+
         if (parent == nullptr)
-            root = temp; // 삭제할 노드가 루트일 경우
+            root = temp; 
         else if (parent->left == current)
             parent->left = temp;
         else
             parent->right = temp;
-        // delete current;
+        delete current;
     } else {
-        // 자식이 두 개인 경우 오른쪽 서브트리에서 최소값 노드를 찾아 대체
-        Node* min = current->right; // 오른쪽 서브트리에서 최소값을 찾기 시작
+        Node* min = current->right; 
         Node* min_parent = current;
         while (min->left != nullptr) {
             min_parent = min;
             min = min->left;
         }
-        current->key = min->key; // 최소 노드의 키와 값으로 대체
+        current->key = min->key; 
         current->value = min->value;
         current->upd_cnt = min->upd_cnt;
 
@@ -267,7 +269,7 @@ void CoarseBST::traversalRecursive(Node* node, KVC* arr, int& index) {
 
 void CoarseBST::traversal(KVC* arr) {
     int index = 0;
-    traversalRecursive(root, arr, index); // 루트부터 순회 시작
+    traversalRecursive(root, arr, index);
 }
 
 
@@ -278,7 +280,7 @@ FineBST::FineBST() : root(nullptr) {}
 void FineBST::insert(int key, int value) {
     FineNode* new_node = new FineNode(key, value, 0, nullptr, nullptr);
 
-    if (root == nullptr) {
+    if (root == nullptr) { // 트리가 비어있으면
         root = new_node;
         return;
     }
@@ -290,34 +292,30 @@ void FineBST::insert(int key, int value) {
         
         pthread_mutex_lock(&cur->node_lock);
 
-        parent = cur;
 
         if (key < cur->key) { // 삽입할 키가 현재 키보다 작으면
             if (cur->left == nullptr) {
                 cur->left = new_node;
                 pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
-
                 return;
             }
+            pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
             cur = static_cast<FineNode*>(cur->left); // 왼쪽 자식으로 이동
         } else if (key > cur->key) { // 삽입할 키가 현재 키보다 크면
             if (cur->right == nullptr) {
                 cur->right = new_node;
                 pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
- 
                 return; 
             }
+            pthread_mutex_unlock(&cur->node_lock); // 노드 잠금 해제
             cur = static_cast<FineNode*>(cur->right); // 오른쪽 자식으로 이동
         } else { // 이미 키가 존재하면
             cur->value += value;
             cur->upd_cnt++;         
             pthread_mutex_unlock(&cur->node_lock); // 현재 노드 잠금 해제
-          
-            // delete new_node;
+            delete new_node; 
             return;
         }
-
-        pthread_mutex_unlock(&parent->node_lock); // 부모 노드 잠금 해제
     
     }
 }
@@ -326,7 +324,7 @@ int FineBST::lookup(int key) {
 
     FineNode* cur = root;
 
-    if (cur == nullptr) {
+    if (cur == nullptr) { // 트리가 비어있으면
         return 0;
     }
 
@@ -352,14 +350,13 @@ int FineBST::lookup(int key) {
     }
 }
 
-
 void FineBST::remove(int key) {
     FineNode* cur = root;
     FineNode* parent = nullptr;
     FineNode* target = nullptr; // 제거될 목표 노드
     FineNode* target_parent = nullptr;
 
-    if (cur == nullptr) {
+    if (cur == nullptr) { // 트리가 비어있으면
         return;
     }
 
@@ -368,8 +365,8 @@ void FineBST::remove(int key) {
         pthread_mutex_lock(&cur->node_lock); 
 
         if (key == cur->key) { // 현재 노드가 목표 노드이면
-            target = cur;
-            target_parent = parent; 
+            target = cur; // 목표 노드 설정
+            target_parent = parent; // 목표 노드의 부모 설정
             pthread_mutex_unlock(&cur->node_lock); // 잠금 해제 후 삭제 절차 진행
             break;
         } else if (key < cur->key && cur->left != nullptr) { // 키가 작으면 왼쪽으로 이동
@@ -382,27 +379,19 @@ void FineBST::remove(int key) {
             pthread_mutex_unlock(&cur->node_lock); // 현재 노드 잠금 해제
             parent = cur;
             cur = next; // 오른쪽 자식으로 이동
-        } else { // 키를 찾지 못하면
+        } else { 
+            // 키를 찾지 못하면
             pthread_mutex_unlock(&cur->node_lock);
             return;
         }
     }
 
-    // 노드 제거 절차 수행
+    // 삭제할 노드가 존재하면, 삭제 과정 시작
+   
     pthread_mutex_lock(&target->node_lock); // 목표 노드 잠금
-
-    if (target->left == nullptr && target->right == nullptr) { 
-        // 자식 노드가 없는 경우
-        if (target_parent == nullptr) { // 목표 노드가 루트인 경우
-            root = nullptr;
-        } else if (target_parent->left == target) { // 목표 노드가 왼쪽 자식인 경우
-            target_parent->left = nullptr;
-        } else { // 목표 노드가 오른쪽 자식인 경우
-            target_parent->right = nullptr;
-        }
-        pthread_mutex_unlock(&target->node_lock); // 목표 노드 잠금 해제
-    } else if (target->left == nullptr || target->right == nullptr) { 
-        // 한 쪽 자식만 있는 경우
+    if (target->left == nullptr || target->right == nullptr) { 
+        // 자식 노드가 하나도 없거나 하나만 있는 경우
+        
         FineNode* child = (target->left != nullptr) 
         ? static_cast<FineNode*>(target->left) : static_cast<FineNode*>(target->right);
         if (target_parent == nullptr) { // 목표 노드가 루트인 경우
@@ -413,10 +402,10 @@ void FineBST::remove(int key) {
             target_parent->right = child;
         }
         pthread_mutex_unlock(&target->node_lock); // 목표 노드 잠금 해제
-        
-    } else { // 두 개의 자식을 가진 경우
-        
+    } else { 
+        // 두 개의 자식을 가진 경우
         // 오른쪽 자식에서 최소값 탐색 시작
+        
         FineNode* min = static_cast<FineNode*>(target->right);
         FineNode* min_parent = target;
 
@@ -428,21 +417,20 @@ void FineBST::remove(int key) {
                 min = static_cast<FineNode*>(min->left); // 왼쪽 자식으로 이동
         }
 
-       if (target != min) { // check
-            target->key = min->key;
-            target->value = min->value;
-            target->upd_cnt = min->upd_cnt;
-        }
+        // 삭제할 노드에 최소 노드 정보를 복사
+        target->key = min->key;
+        target->value = min->value;
+        target->upd_cnt = min->upd_cnt;
+        
 
-        if (min_parent->left == min) { // 최소 노드 제거
+        if (min_parent->left == min) { // 최소 노드 제거 후 자식 연결
             min_parent->left = min->right;
         } else {
             min_parent->right = min->right;
         }
 
-        pthread_mutex_unlock(&min_parent->node_lock);  
-        
-        pthread_mutex_unlock(&min->node_lock); // 목표 노드의 잠금 해제
+        pthread_mutex_unlock(&min_parent->node_lock);  // 최소 노드의 부모 잠금 해제
+        pthread_mutex_unlock(&min->node_lock); // 최소 노드 잠금 해제
         delete min;
     }
 }
@@ -462,5 +450,5 @@ void FineBST::traversalRecursive(FineNode* node, KVC* arr, int& index) {
 
 void FineBST::traversal(KVC* arr) {
     int index = 0;
-    traversalRecursive(root, arr, index); // 루트부터 순회 시작
+    traversalRecursive(root, arr, index);
 }
