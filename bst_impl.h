@@ -18,7 +18,7 @@
 class BST : public DefaultBST {
 private:
     // 멤버 변수 추가 선언 가능
-    Node* root; // 루트 노드 포인터
+    Node* root; 
 
 public:
     // 멤버 함수 추가 선언 가능
@@ -39,8 +39,8 @@ public:
 class CoarseBST : public DefaultBST {
 private:
     // 멤버 변수 추가 선언 가능
-    Node* root; // 루트 노드 포인터
-    pthread_mutex_t mutex_lock; // 뮤텍스 락
+    Node* root; 
+    pthread_mutex_t mutex_lock; 
 
 public:
     // 멤버 함수 추가 선언 가능
@@ -56,8 +56,6 @@ public:
 struct FineNode : public Node {
     // 멤버 변수 추가 가능
     pthread_mutex_t node_lock; // FineNode에 대한 fine-grained lock
-
-    
 
     FineNode(int key, int value, int upd_cnt, Node* left, Node* right) 
     : Node{key, value, upd_cnt, left, right} {
@@ -76,7 +74,7 @@ struct FineNode : public Node {
 class FineBST : public DefaultBST {
 	private:
 		// 멤버 변수 추가 선언 가능
-        FineNode* root; // 루트 노드 포인터
+        FineNode* root;
         
 	public:
         FineBST();

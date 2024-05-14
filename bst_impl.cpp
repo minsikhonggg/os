@@ -28,19 +28,17 @@ void BST::insert(int key, int value) {
             }
             current = current->left; // 왼쪽 자식으로 이동
         }
-        else if (key > current->key) 
-        { // 삽입할 키가 현재 노드의 키보다 크면
+        else if (key > current->key) { // 삽입할 키가 현재 노드의 키보다 크면
             if (current->right == nullptr) { // 오른쪽 자식이 없는 경우
                 current->right = newNode; // 새로운 노드를 오른쪽 자식으로 설정
                 return;
             }
             current = current->right; // 오른쪽 자식으로 이동
         }
-        else
-        {
-            current->value += value; // 동일한 키 발견시 값 업데이트
+        else { // 동일한 키 발견시
+            current->value += value; // 값 업데이트
             current->upd_cnt++; // 업데이트 횟수 증가
-            delete newNode; // 새로운 노드 메모리 해제
+            // delete newNode; // 새로운 노드 메모리 해제
             return;
         }
     }
@@ -68,6 +66,7 @@ void BST::remove(int key) {
     Node* parent = nullptr; // 삭제할 노드의 부모 노드를 추적
     Node* current = root; // 현재 노드를 추적
 
+    // 삭제할 노드 찾기
     while (current != nullptr && current->key != key) {
         parent = current;
         if (key < current->key)
@@ -76,10 +75,11 @@ void BST::remove(int key) {
             current = current->right;
     }
 
-    if (current == nullptr) // 삭제할 노드가 존재하지 않음
+    // 삭제할 노드가 존재하지 않았을 때
+    if (current == nullptr)
         return;
 
-    // 삭제할 노드를 찾았을 때의 처리
+    // 삭제할 노드를 찾았을 때
     if (current->left == nullptr || current->right == nullptr) {
         // 자식 노드가 하나도 없거나 하나만 있는 경우
         Node* temp = (current->left != nullptr) ? current->left : current->right;
@@ -89,38 +89,38 @@ void BST::remove(int key) {
             parent->left = temp;
         else
             parent->right = temp;
-        delete current;
+        // delete current;
     } else {
         // 자식이 두 개인 경우 오른쪽 서브트리에서 최소값 노드를 찾아 대체
         Node* min = current->right; // 오른쪽 서브트리에서 최소값을 찾기 시작
-        Node* minParent = current;
+        Node* min_parent = current;
         while (min->left != nullptr) {
-            minParent = min;
+            min_parent = min;
             min = min->left;
         }
         current->key = min->key; // 최소 노드의 키와 값으로 대체
         current->value = min->value;
         current->upd_cnt = min->upd_cnt;
 
-        if (minParent == current)
-            minParent->right = min->right;
+        if (min_parent == current) // 삭제대상 오른쪽 자식이 min임을 의미
+            min_parent->right = min->right; // min의 자식들을 min부모의 오른쪽 자식으로 연결하여, 연결 끊기
         else
-            minParent->left = min->right;
+            min_parent->left = min->right; // min의 자식들을 min부모의 왼쪽 자식으로 연결하여, 연결 끊기
         delete min;
     }
 }
 
 void BST::traversalRecursive(Node* node, KVC* arr, int& index) {
     if (node == nullptr) {
-        return;
+        return; // 노드가 null이면 반환
     }
 
-    traversalRecursive(node->left, arr, index);
+    traversalRecursive(node->left, arr, index); // 왼쪽 서브트리 순회
     arr[index].key = node->key;  
     arr[index].value = node->value;
     arr[index].upd_cnt = node->upd_cnt;
-    index++; 
-    traversalRecursive(node->right, arr, index);
+    index++; // 현재 노드 값 저장 후 인덱스 증가
+    traversalRecursive(node->right, arr, index); // 오른쪽 서브트리 순회
 }
 
 void BST::traversal(KVC* arr) {
@@ -166,7 +166,7 @@ void CoarseBST::insert(int key, int value) {
         } else { 
             current->value += value; 
             current->upd_cnt++; 
-            delete newNode; 
+            // delete newNode; 
             pthread_mutex_unlock(&mutex_lock); // 락 해제
             return;
         }
@@ -229,23 +229,23 @@ void CoarseBST::remove(int key) {
             parent->left = temp;
         else
             parent->right = temp;
-        delete current;
+        // delete current;
     } else {
         // 자식이 두 개인 경우 오른쪽 서브트리에서 최소값 노드를 찾아 대체
         Node* min = current->right; // 오른쪽 서브트리에서 최소값을 찾기 시작
-        Node* minParent = current;
+        Node* min_parent = current;
         while (min->left != nullptr) {
-            minParent = min;
+            min_parent = min;
             min = min->left;
         }
         current->key = min->key; // 최소 노드의 키와 값으로 대체
         current->value = min->value;
         current->upd_cnt = min->upd_cnt;
 
-        if (minParent == current)
-            minParent->right = min->right;
+        if (min_parent == current)
+            min_parent->right = min->right;
         else
-            minParent->left = min->right;
+            min_parent->left = min->right;
         delete min;
     }
 
@@ -313,7 +313,7 @@ void FineBST::insert(int key, int value) {
             cur->upd_cnt++;         
             pthread_mutex_unlock(&cur->node_lock); // 현재 노드 잠금 해제
           
-            //delete new_node;
+            // delete new_node;
             return;
         }
 
@@ -424,7 +424,7 @@ void FineBST::remove(int key) {
             pthread_mutex_lock(&min->node_lock); // 최소 노드 잠금
             pthread_mutex_unlock(&min_parent->node_lock); // 부모 노드 잠금 해제
             min_parent = min; // 부모 업데이트
-            if(min->left != nullptr) 
+            if(min->left != nullptr)
                 min = static_cast<FineNode*>(min->left); // 왼쪽 자식으로 이동
         }
 
@@ -440,9 +440,9 @@ void FineBST::remove(int key) {
             min_parent->right = min->right;
         }
 
-        pthread_mutex_unlock(&min_parent->node_lock); // 
+        pthread_mutex_unlock(&min_parent->node_lock);  
         
-        pthread_mutex_unlock(&target->node_lock); // 목표 노드의 잠금 해제
+        pthread_mutex_unlock(&min->node_lock); // 목표 노드의 잠금 해제
         delete min;
     }
 }
